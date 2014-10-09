@@ -60,12 +60,14 @@ if not find_executable('wiggle'):
 def processFile(path):
   path = os.path.splitext(path)[0]
   filename = os.path.relpath(path)
-  if not os.path.exists(filename):
-    exit("Error: can't find '%s'" % filename)
   if not os.path.exists(filename + '.rej'):
-    exit("Error: can't find '%s'" % filename + '.rej')
+    exit("Error: can't find reject file '%s'" % filename + '.rej')
+  if not os.path.exists(filename):
+    print "Skipping reject file with no original '%s'" % (filename + '.rej')
+    return False
   print "wiggle --replace %s %s" % (filename, filename + '.rej')
   os.system("wiggle --replace '%s' '%s'" % (path, path + '.rej'))
+  return True
 
 # recursively find all rejects
 targets = []
@@ -100,8 +102,8 @@ targets = [ x for x in targets if x not in seen and not seen.add(x)]
 
 # wiggle
 for target in targets:
-  processFile(target)
-  if not args.keep_backup:
+  succeeded = processFile(target)
+  if succeeded and not args.keep_backup:
     os.remove(target)
     os.remove(os.path.splitext(target)[0] + '.porig')
 
